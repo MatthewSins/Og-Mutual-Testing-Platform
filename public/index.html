@@ -146,13 +146,14 @@
     </div>
 
     <script>
-        // Init Particles
         tsParticles.loadPreset("tsparticles", "stars");
 
-        // --- 1. SUPABASE SETUP (DECLARED ONLY ONCE) ---
+        // --- 1. SUPABASE SETUP ---
         const SUPABASE_URL = "https://aqdunqacywekbajxxiqc.supabase.co"; 
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxZHVucWFjeXdla2Jhanh4aXFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIxOTc0NTMsImV4cCI6MjA5Nzc3MzQ1M30.hUMMoK7sBidrY1hXcWWSRIWqAviNEC5h7slf875BCr0";
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        // FIX: We rename our connection to 'supabaseClient' so it doesn't fight the CDN
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         // --- 2. GLOBAL VARIABLES ---
         let isLoginMode = true;
@@ -187,9 +188,9 @@
                 let authResponse;
 
                 if (isLoginMode) {
-                    authResponse = await supabase.auth.signInWithPassword({ email, password });
+                    authResponse = await supabaseClient.auth.signInWithPassword({ email, password });
                 } else {
-                    authResponse = await supabase.auth.signUp({ email, password });
+                    authResponse = await supabaseClient.auth.signUp({ email, password });
                 }
 
                 if (authResponse.error) {
@@ -207,12 +208,12 @@
         }
 
         // --- 4. SESSION LISTENER ---
-        supabase.auth.onAuthStateChange(async (event, session) => {
+        supabaseClient.auth.onAuthStateChange(async (event, session) => {
             if (session) {
                 currentUser = session.user;
                 
                 // Fetch stats from free_users table
-                const { data } = await supabase.from('free_users').select('tests_completed').eq('id', currentUser.id).single();
+                const { data } = await supabaseClient.from('free_users').select('tests_completed').eq('id', currentUser.id).single();
                 
                 if (data) {
                     userData.tests_completed = data.tests_completed || 0;
@@ -252,7 +253,7 @@
 
         // --- 6. DATABASE READ/WRITE ---
         async function loadCommunityApps() {
-            const { data: apps, error } = await supabase.from('community_apps').select('*').eq('status', 'active');
+            const { data: apps, error } = await supabaseClient.from('community_apps').select('*').eq('status', 'active');
             const container = document.getElementById('appListContainer');
             
             if (error) {
@@ -299,7 +300,7 @@
             btn.innerText = "Publishing...";
             btn.disabled = true;
 
-            const { error } = await supabase.from('community_apps').insert([{ 
+            const { error } = await supabaseClient.from('community_apps').insert([{ 
                 owner_id: currentUser.id,
                 app_name: name,
                 package_name: pkg,
