@@ -3,109 +3,195 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OG Free Mutual Beta Testing</title>
+    <title>OG Tester Companion</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tsparticles-preset-stars@2/tsparticles.preset.stars.bundle.min.js"></script>
+    
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f172a; color: #f8fafc; padding: 20px; }
-        .card { background: #1e293b; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        input, textarea { width: 100%; padding: 12px; margin: 8px 0; border-radius: 6px; border: 1px solid #475569; background: #0f172a; color: white; box-sizing: border-box; }
-        button { width: 100%; background: #2563eb; color: white; border: none; padding: 14px; border-radius: 6px; font-weight: bold; cursor: pointer; }
-        button:disabled { background: #475569; }
-        #status { font-weight: bold; margin: 10px 0; }
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --accent: #3b82f6;
+            --accent-hover: #2563eb;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        body { 
+            margin: 0; 
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            background: #000000; /* Deep black space base */
+            color: var(--text-main); 
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        /* The particle canvas layer */
+        #tsparticles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+
+        /* Glassmorphism Container */
+        .container {
+            position: relative;
+            z-index: 1;
+            width: 90%;
+            max-width: 500px;
+            padding: 32px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            text-align: center;
+        }
+
+        h2 { margin-top: 0; font-weight: 600; letter-spacing: -0.5px; }
+        p { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 24px; }
+
+        input, textarea { 
+            width: 100%; 
+            padding: 14px; 
+            margin: 8px 0 16px 0; 
+            border-radius: 10px; 
+            border: 1px solid var(--glass-border); 
+            background: rgba(0, 0, 0, 0.2); 
+            color: white; 
+            box-sizing: border-box;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+            background: rgba(0, 0, 0, 0.4);
+        }
+
+        button { 
+            width: 100%; 
+            background: var(--accent); 
+            color: white; 
+            border: none; 
+            padding: 16px; 
+            border-radius: 10px; 
+            font-weight: 600; 
+            font-size: 1rem;
+            cursor: pointer; 
+            transition: background 0.3s ease, transform 0.1s ease;
+        }
+
+        button:hover:not(:disabled) { background: var(--accent-hover); }
+        button:active:not(:disabled) { transform: scale(0.98); }
+        button:disabled { background: #334155; color: #94a3b8; cursor: not-allowed; }
+
+        #status { font-weight: 500; margin-top: 16px; font-size: 0.9rem; min-height: 20px;}
         .hidden { display: none; }
     </style>
 </head>
 <body>
 
-    <div class="card">
-        <h2>OG Tester Companion</h2>
-        <p>Enter the package name of the app you are testing:</p>
-        <input type="text" id="packageName" placeholder="e.g., com.example.myapp">
-        <button id="verifyBtn" onclick="triggerAndroidVerification()">Verify 1 Minute Playtime</button>
-        <div id="status">Ready</div>
-    </div>
+    <div id="tsparticles"></div>
 
-    <div id="feedbackSection" class="card hidden">
-        <h3>🎉 Verification Success!</h3>
-        <p>Submit your first impression or bug report to claim your Karma point:</p>
-        <textarea id="bugFeedback" rows="4" placeholder="What issues or bugs did you encounter? Minimum 10 characters..."></textarea>
-        <button id="submitBtn" onclick="submitLogToSupabase()">Submit Feedback & Earn Karma</button>
+    <div class="container">
+        <div id="verifySection">
+            <h2>OG Tester Companion</h2>
+            <p>Enter the package name to verify your testing session.</p>
+            <input type="text" id="packageName" placeholder="e.g., com.example.myapp">
+            <button id="verifyBtn" onclick="triggerAndroidVerification()">Verify 1 Minute Playtime</button>
+            <div id="status"></div>
+        </div>
+
+        <div id="feedbackSection" class="hidden">
+            <h2>🎉 Verification Success</h2>
+            <p>Submit your bug report to claim your Karma point.</p>
+            <textarea id="bugFeedback" rows="4" placeholder="Detail the issues or UI bugs you encountered..."></textarea>
+            <button id="submitBtn" onclick="submitLogToSupabase()">Submit & Earn Karma</button>
+        </div>
     </div>
 
     <script>
-        // Initialize Supabase (Vercel will inject these from Environment Variables)
+        // Initialize realistic space particles
+        tsParticles.loadPreset("tsparticles", "stars").then(() => {
+            console.log("Particles loaded");
+        });
+
+        // Supabase Init (Replace with your actual keys!)
         const SUPABASE_URL = "https://YOUR_PROJECT_ID.supabase.co"; 
         const SUPABASE_ANON_KEY = "YOUR_ANON_KEY";
         const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let verifiedDuration = 0;
         let resolvedAppUuid = "";
-        
-        // Mocked or dynamically set from your app login session
         let currentTesterUuid = "PASTE_A_VALID_USER_UUID_FROM_SUPABASE_AUTH";
 
-        // 1. Tells the Native Android wrapper to look up foreground time
         function triggerAndroidVerification() {
             const pkg = document.getElementById('packageName').value.trim();
-            if (!pkg) { alert("Please enter a package name."); return; }
+            const statusDiv = document.getElementById('status');
             
-            document.getElementById('status').innerText = "Checking system usage records...";
+            if (!pkg) { 
+                statusDiv.innerText = "Please enter a package name."; 
+                statusDiv.style.color = "#fbbf24";
+                return; 
+            }
+            
+            statusDiv.innerText = "Scanning system usage records...";
+            statusDiv.style.color = var(--text-muted);
             
             if (window.AndroidBridge) {
-                // Invokes the native Kotlin hardware hook
                 window.AndroidBridge.verifyAppUsage(pkg);
             } else {
-                document.getElementById('status').innerText = "Error: Open this page inside the OG Companion APK to track time.";
-                document.getElementById('status').style.color = "#ef4444";
+                statusDiv.innerText = "Hardware connection missing. Open inside the OG APK.";
+                statusDiv.style.color = "#ef4444";
             }
         }
 
-        // 2. The Kotlin Android app executes this callback if validation PASSES
         function onValidationSuccess(packageName, durationSeconds, appUuid) {
             verifiedDuration = durationSeconds;
             resolvedAppUuid = appUuid;
             
-            const statusDiv = document.getElementById('status');
-            statusDiv.innerText = `Successfully verified! Used for ${durationSeconds} seconds today.`;
-            statusDiv.style.color = "#22c55e";
-            
+            document.getElementById('verifySection').classList.add('hidden');
             document.getElementById('feedbackSection').classList.remove('hidden');
-            document.getElementById('verifyBtn').disabled = true;
         }
 
-        // 3. The Kotlin Android app executes this callback if validation FAILS
         function onValidationFailed(remainingSeconds) {
             const statusDiv = document.getElementById('status');
-            statusDiv.innerText = `Validation Failed. You need to keep the app open for ${remainingSeconds} more seconds.`;
+            statusDiv.innerText = `Keep the app open for ${remainingSeconds} more seconds.`;
             statusDiv.style.color = "#ef4444";
         }
 
-        // 4. Submits the transaction directly to your active Supabase setup
         async function submitLogToSupabase() {
             const feedback = document.getElementById('bugFeedback').value.trim();
-            if (feedback.length < 10) { alert("Please provide a bit more detailed feedback for the developer."); return; }
+            if (feedback.length < 10) { alert("Please provide detailed feedback."); return; }
             
-            document.getElementById('submitBtn').disabled = true;
-            document.getElementById('submitBtn').innerText = "Uploading data...";
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.innerText = "Encrypting and Uploading...";
 
             const { data, error } = await supabase
                 .from('daily_progress_logs')
-                .insert([
-                    { 
-                        tester_id: currentTesterUuid, 
-                        app_id: resolvedAppUuid, 
-                        duration_seconds: parseInt(verifiedDuration),
-                        bug_feedback: feedback 
-                    }
-                ]);
+                .insert([{ 
+                    tester_id: currentTesterUuid, 
+                    app_id: resolvedAppUuid, 
+                    duration_seconds: parseInt(verifiedDuration),
+                    bug_feedback: feedback 
+                }]);
 
             if (error) {
                 alert("Upload failed: " + error.message);
-                document.getElementById('submitBtn').disabled = false;
-                document.getElementById('submitBtn').innerText = "Submit Feedback & Earn Karma";
+                btn.disabled = false;
+                btn.innerText = "Submit & Earn Karma";
             } else {
                 alert("Karma Point safely added to your balance!");
-                location.reload(); // Reset screen for next test execution
+                location.reload(); 
             }
         }
     </script>
