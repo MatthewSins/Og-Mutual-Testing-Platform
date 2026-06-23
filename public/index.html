@@ -34,7 +34,7 @@
         .glass-card {
             background: var(--glass-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
             border: 1px solid var(--glass-border); border-radius: 16px; padding: 20px; margin-bottom: 16px;
-            width: 90%; max-width: 400px;
+            width: 90%; max-width: 400px; margin-left: auto; margin-right: auto;
         }
 
         header { padding: 20px; text-align: center; background: rgba(0,0,0,0.5); border-bottom: 1px solid var(--glass-border); z-index: 10; }
@@ -79,7 +79,7 @@
             <p id="authError" style="color:var(--danger); font-size:0.85rem; text-align:center;"></p>
             
             <input type="email" id="authEmail" placeholder="Developer Email">
-            <input type="password" id="authPassword" placeholder="Password">
+            <input type="password" id="authPassword" placeholder="Password (Min 6 chars)">
             
             <button id="mainAuthBtn" onclick="handleAuth()">Sign In</button>
             <button class="btn-outline" onclick="toggleAuthMode()" id="switchAuthBtn">Need an account? Sign up</button>
@@ -98,7 +98,9 @@
         <main>
             <div id="view-community" class="view active">
                 <h2 style="margin-top:0;">Community Apps</h2>
-                <div id="appListContainer">Loading pool...</div>
+                <div id="appListContainer">
+                    <div class="glass-card" style="text-align: center; color: var(--text-muted);">Loading pool...</div>
+                </div>
             </div>
 
             <div id="view-verify" class="view">
@@ -108,6 +110,7 @@
                     <button onclick="triggerAndroidVerification()">Verify 1 Minute Playtime</button>
                     <div id="status" style="margin-top: 15px;"></div>
                 </div>
+                
                 <div id="feedbackSection" class="glass-card" style="display:none; border-color:var(--success); text-align:center;">
                     <h2>🎉 Verified!</h2>
                     <button onclick="rewardUser()" style="background:var(--success);">Claim +1 Karma & Test Count</button>
@@ -143,18 +146,20 @@
     </div>
 
     <script>
+        // Init Particles
         tsParticles.loadPreset("tsparticles", "stars");
 
-        // --- SUPABASE SETUP ---
+        // --- 1. SUPABASE SETUP (DECLARED ONLY ONCE) ---
         const SUPABASE_URL = "https://aqdunqacywekbajxxiqc.supabase.co"; 
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxZHVucWFjeXdla2Jhanh4aXFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIxOTc0NTMsImV4cCI6MjA5Nzc3MzQ1M30.hUMMoK7sBidrY1hXcWWSRIWqAviNEC5h7slf875BCr0";
         const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+        // --- 2. GLOBAL VARIABLES ---
         let isLoginMode = true;
         let currentUser = null;
-        let userData = { tests_completed: 0, karma: 0 }; // Local state
+        let userData = { tests_completed: 0, karma: 0 }; 
 
-        // --- AUTH LOGIC ---
+        // --- 3. AUTHENTICATION LOGIC ---
         function toggleAuthMode() {
             isLoginMode = !isLoginMode;
             document.getElementById('authTitle').innerText = isLoginMode ? "Login" : "Create Account";
@@ -162,60 +167,55 @@
             document.getElementById('switchAuthBtn').innerText = isLoginMode ? "Need an account? Sign up" : "Already have an account? Login";
         }
 
-        async function handleAuth() 
-        {
-    const email = document.getElementById('authEmail').value.trim();
-    const password = document.getElementById('authPassword').value;
-    const errDiv = document.getElementById('authError');
-    const btn = document.getElementById('mainAuthBtn');
-    
-    // Reset colors
-    errDiv.style.color = "var(--danger)";
+        async function handleAuth() {
+            const email = document.getElementById('authEmail').value.trim();
+            const password = document.getElementById('authPassword').value;
+            const errDiv = document.getElementById('authError');
+            const btn = document.getElementById('mainAuthBtn');
+            
+            errDiv.style.color = "var(--danger)";
 
-    if(!email || password.length < 6) { 
-        errDiv.innerText = "Valid email and 6+ char password required."; 
-        return; 
-    }
-    
-    btn.innerText = "Processing...";
-    errDiv.innerText = ""; // Clear old errors
+            if(!email || password.length < 6) { 
+                errDiv.innerText = "Valid email and 6+ char password required."; 
+                return; 
+            }
+            
+            btn.innerText = "Processing...";
+            errDiv.innerText = ""; 
 
-    try {
-        let authResponse;
+            try {
+                let authResponse;
 
-        if (isLoginMode) {
-            authResponse = await supabase.auth.signInWithPassword({ email, password });
-        } else {
-            authResponse = await supabase.auth.signUp({ email, password });
+                if (isLoginMode) {
+                    authResponse = await supabase.auth.signInWithPassword({ email, password });
+                } else {
+                    authResponse = await supabase.auth.signUp({ email, password });
+                }
+
+                if (authResponse.error) {
+                    errDiv.innerText = authResponse.error.message;
+                    btn.innerText = isLoginMode ? "Sign In" : "Sign Up";
+                } else if (!isLoginMode && !authResponse.data.session) {
+                    errDiv.innerText = "Success! Please check your email inbox to verify your account.";
+                    errDiv.style.color = "var(--success)";
+                    btn.innerText = "Sign Up";
+                }
+            } catch (err) {
+                errDiv.innerText = "Network Error. Check your Supabase keys.";
+                btn.innerText = isLoginMode ? "Sign In" : "Sign Up";
+            }
         }
 
-        if (authResponse.error) {
-            // Show Supabase error (e.g., "Invalid credentials")
-            errDiv.innerText = authResponse.error.message;
-            btn.innerText = isLoginMode ? "Sign In" : "Sign Up";
-        } else if (!isLoginMode && !authResponse.data.session) {
-            // Catch the silent trap if Email Confirmation is still turned on
-            errDiv.innerText = "Success! Please check your email inbox to verify your account.";
-            errDiv.style.color = "var(--success)";
-            btn.innerText = "Sign Up";
-        }
-    } catch (err) {
-        errDiv.innerText = "Network Error. Did you paste your Supabase keys correctly?";
-        btn.innerText = isLoginMode ? "Sign In" : "Sign Up";
-    }
-}
-
-        // Listener: Watches for login/logout and fetches user data
+        // --- 4. SESSION LISTENER ---
         supabase.auth.onAuthStateChange(async (event, session) => {
             if (session) {
                 currentUser = session.user;
                 
-                // Fetch user data from your free_users table
+                // Fetch stats from free_users table
                 const { data } = await supabase.from('free_users').select('tests_completed').eq('id', currentUser.id).single();
                 
                 if (data) {
                     userData.tests_completed = data.tests_completed || 0;
-                    // Note: Update this query if you have a specific karma column!
                     updateUIStats();
                 }
 
@@ -231,7 +231,6 @@
         function updateUIStats() {
             document.getElementById('uiTests').innerText = userData.tests_completed;
             
-            // GATE CHECK LOGIC: Lock submission if tests < 3
             if (userData.tests_completed < 3) {
                 document.getElementById('submitRequirementGate').style.display = 'block';
                 document.getElementById('submitAppBtn').disabled = true;
@@ -243,7 +242,7 @@
             }
         }
 
-        // --- CORE FUNCTIONS ---
+        // --- 5. UI NAVIGATION ---
         function switchTab(tabId) {
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -251,10 +250,20 @@
             event.currentTarget.classList.add('active');
         }
 
+        // --- 6. DATABASE READ/WRITE ---
         async function loadCommunityApps() {
             const { data: apps, error } = await supabase.from('community_apps').select('*').eq('status', 'active');
             const container = document.getElementById('appListContainer');
-            if (apps.length === 0) { container.innerHTML = `<div class="glass-card"><p>No apps right now.</p></div>`; return; }
+            
+            if (error) {
+                container.innerHTML = `<div class="glass-card"><p style="color:var(--danger)">Error: ${error.message}</p></div>`;
+                return;
+            }
+
+            if (!apps || apps.length === 0) { 
+                container.innerHTML = `<div class="glass-card" style="text-align:center"><p>No apps right now. Check back soon!</p></div>`; 
+                return; 
+            }
             
             container.innerHTML = ''; 
             apps.forEach(app => {
@@ -273,17 +282,22 @@
             window.open(url, '_blank');
             document.getElementById('verifyPackageName').value = packageName;
             switchTab('verify');
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             document.querySelectorAll('.nav-item')[1].classList.add('active'); 
         }
 
         async function submitNewApp() {
-            if (userData.tests_completed < 3) return; // Hard security check
+            if (userData.tests_completed < 3) return; 
 
             const name = document.getElementById('newAppName').value.trim();
             const pkg = document.getElementById('newAppPackage').value.trim();
             const url = document.getElementById('newAppUrl').value.trim();
+            const btn = document.getElementById('submitAppBtn');
 
             if(!name || !pkg || !url) { alert("Fill all fields."); return; }
+
+            btn.innerText = "Publishing...";
+            btn.disabled = true;
 
             const { error } = await supabase.from('community_apps').insert([{ 
                 owner_id: currentUser.id,
@@ -292,30 +306,50 @@
                 play_store_link: url
             }]);
 
-            if (error) { alert("Failed: " + error.message); } 
-            else {
-                alert("App Published!");
+            if (error) { 
+                alert("Failed: " + error.message); 
+                btn.innerText = "Spend 20 Karma & Publish";
+                btn.disabled = false;
+            } else {
+                alert("App Published Successfully!");
                 document.getElementById('newAppName').value = '';
                 document.getElementById('newAppPackage').value = '';
                 document.getElementById('newAppUrl').value = '';
+                btn.innerText = "Spend 20 Karma & Publish";
+                btn.disabled = false;
+                
                 loadCommunityApps();
                 document.querySelectorAll('.nav-item')[0].click();
             }
         }
 
-        // --- HARDWARE VERIFICATION SIMULATION ---
+        // --- 7. HARDWARE VERIFICATION ---
         function triggerAndroidVerification() {
-            document.getElementById('status').innerText = "Simulating Hardware Check...";
-            setTimeout(() => { 
-                document.getElementById('status').innerText = "";
-                document.getElementById('feedbackSection').style.display = 'block';
-            }, 1000);
+            const pkg = document.getElementById('verifyPackageName').value.trim();
+            const statusDiv = document.getElementById('status');
+            
+            if (!pkg) { statusDiv.innerText = "Please enter a package name."; return; }
+            
+            statusDiv.innerText = "Scanning device usage records...";
+            statusDiv.style.color = "var(--accent)";
+            
+            if (window.AndroidBridge) {
+                window.AndroidBridge.verifyAppUsage(pkg);
+            } else {
+                statusDiv.innerText = "TESTING MODE: Hardware bypassed in browser.";
+                setTimeout(() => { 
+                    document.getElementById('status').style.display = 'none';
+                    document.getElementById('feedbackSection').style.display = 'block';
+                }, 1500);
+            }
         }
 
         async function rewardUser() {
-            // This is where you will run an UPDATE on your free_users table to increment tests_completed by 1
-            alert("This will update the database later! For now, good job.");
+            alert("Reward logic will go here! Returning to feed.");
             document.getElementById('feedbackSection').style.display = 'none';
+            document.getElementById('status').style.display = 'block';
+            document.getElementById('status').innerText = "";
+            document.querySelectorAll('.nav-item')[0].click();
         }
     </script>
 </body>
