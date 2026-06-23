@@ -32,7 +32,7 @@ class MainActivity : AppCompatActivity() {
 
         // 2. Load your live Vercel Deployment Link
         // REPLACE THIS URL with your actual live Vercel URL!
-        webView.loadUrl("https://your-project.vercel.app")
+        webView.loadUrl("https://og-mutual-testing-platform.vercel.app/")
 
         checkUsageStatsPermission()
     }
