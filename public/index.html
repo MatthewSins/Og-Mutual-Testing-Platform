@@ -3,197 +3,276 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OG Tester Companion</title>
+    <title>OG Mutual Testing Network</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/tsparticles-preset-stars@2/tsparticles.preset.stars.bundle.min.js"></script>
     
     <style>
         :root {
-            --glass-bg: rgba(255, 255, 255, 0.03);
-            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
             --accent: #3b82f6;
             --accent-hover: #2563eb;
+            --success: #10b981;
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
+            --nav-height: 70px;
         }
 
         body { 
-            margin: 0; 
-            padding: 0;
+            margin: 0; padding: 0;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-            background: #000000; /* Deep black space base */
+            background: #000000; 
             color: var(--text-main); 
             height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
 
-        /* The particle canvas layer */
-        #tsparticles {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            z-index: 0;
+        #tsparticles { position: absolute; width: 100%; height: 100%; z-index: -1; }
+
+        header {
+            padding: 20px; text-align: center; background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px); border-bottom: 1px solid var(--glass-border); z-index: 10;
+        }
+        header h1 { margin: 0; font-size: 1.2rem; font-weight: 600; letter-spacing: 1px;}
+        .karma-badge {
+            display: inline-block; margin-top: 8px; padding: 4px 12px;
+            background: rgba(59, 130, 246, 0.2); border: 1px solid var(--accent);
+            border-radius: 20px; font-size: 0.85rem; color: #60a5fa;
         }
 
-        /* Glassmorphism Container */
-        .container {
-            position: relative;
-            z-index: 1;
-            width: 90%;
-            max-width: 500px;
-            padding: 32px;
-            background: var(--glass-bg);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid var(--glass-border);
-            border-radius: 20px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            text-align: center;
+        main { flex: 1; overflow-y: auto; padding: 20px; padding-bottom: calc(var(--nav-height) + 20px); z-index: 1; }
+
+        .glass-card {
+            background: var(--glass-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border); border-radius: 16px; padding: 20px; margin-bottom: 16px;
         }
 
-        h2 { margin-top: 0; font-weight: 600; letter-spacing: -0.5px; }
-        p { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 24px; }
+        .app-item { display: flex; justify-content: space-between; align-items: center; }
+        .app-info h3 { margin: 0 0 4px 0; font-size: 1.1rem; text-transform: capitalize; }
+        .app-info p { margin: 0; color: var(--text-muted); font-size: 0.85rem; }
+        
+        button { 
+            background: var(--accent); color: white; border: none; padding: 12px 16px; 
+            border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s;
+        }
+        button:hover { background: var(--accent-hover); }
+        .btn-test { background: var(--success); }
+        .btn-test:hover { background: #059669; }
 
         input, textarea { 
-            width: 100%; 
-            padding: 14px; 
-            margin: 8px 0 16px 0; 
-            border-radius: 10px; 
-            border: 1px solid var(--glass-border); 
-            background: rgba(0, 0, 0, 0.2); 
-            color: white; 
-            box-sizing: border-box;
-            font-size: 1rem;
-            transition: all 0.3s ease;
+            width: 100%; padding: 14px; margin: 8px 0 16px 0; border-radius: 10px; 
+            border: 1px solid var(--glass-border); background: rgba(0, 0, 0, 0.3); 
+            color: white; box-sizing: border-box;
         }
-        
-        input:focus, textarea:focus {
-            outline: none;
-            border-color: var(--accent);
-            background: rgba(0, 0, 0, 0.4);
+        input:focus, textarea:focus { outline: none; border-color: var(--accent); }
+
+        nav {
+            position: fixed; bottom: 0; width: 100%; height: var(--nav-height);
+            background: rgba(10, 10, 10, 0.8); backdrop-filter: blur(20px);
+            border-top: 1px solid var(--glass-border); display: flex; 
+            justify-content: space-around; align-items: center; z-index: 10;
         }
-
-        button { 
-            width: 100%; 
-            background: var(--accent); 
-            color: white; 
-            border: none; 
-            padding: 16px; 
-            border-radius: 10px; 
-            font-weight: 600; 
-            font-size: 1rem;
-            cursor: pointer; 
-            transition: background 0.3s ease, transform 0.1s ease;
-        }
-
-        button:hover:not(:disabled) { background: var(--accent-hover); }
-        button:active:not(:disabled) { transform: scale(0.98); }
-        button:disabled { background: #334155; color: #94a3b8; cursor: not-allowed; }
-
-        #status { font-weight: 500; margin-top: 16px; font-size: 0.9rem; min-height: 20px;}
-        .hidden { display: none; }
+        .nav-item { color: var(--text-muted); font-size: 0.85rem; font-weight: 500; text-align: center; cursor: pointer; padding: 10px; flex: 1; }
+        .nav-item.active { color: var(--accent); }
+        .nav-icon { font-size: 1.4rem; display: block; margin-bottom: 4px; }
+        .view { display: none; }
+        .view.active { display: block; }
     </style>
 </head>
 <body>
 
     <div id="tsparticles"></div>
 
-    <div class="container">
-        <div id="verifySection">
-            <h2>OG Tester Companion</h2>
-            <p>Enter the package name to verify your testing session.</p>
-            <input type="text" id="packageName" placeholder="e.g., com.example.myapp">
-            <button id="verifyBtn" onclick="triggerAndroidVerification()">Verify 1 Minute Playtime</button>
-            <div id="status"></div>
+    <header>
+        <h1>OG BETA TESTERS</h1>
+        <div class="karma-badge">Karma Balance: <span id="karmaCount">0</span></div>
+    </header>
+
+    <main>
+        <div id="view-community" class="view active">
+            <h2 style="margin-top:0;">Community Apps</h2>
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px;">Test apps for 60 seconds to earn Karma.</p>
+            
+            <div id="appListContainer">
+                <div class="glass-card" style="text-align: center; color: var(--text-muted);">
+                    Loading community pool...
+                </div>
+            </div>
         </div>
 
-        <div id="feedbackSection" class="hidden">
-            <h2>🎉 Verification Success</h2>
-            <p>Submit your bug report to claim your Karma point.</p>
-            <textarea id="bugFeedback" rows="4" placeholder="Detail the issues or UI bugs you encountered..."></textarea>
-            <button id="submitBtn" onclick="submitLogToSupabase()">Submit & Earn Karma</button>
+        <div id="view-verify" class="view">
+            <div class="glass-card" style="text-align: center;">
+                <h2>Test Verification</h2>
+                <p style="color: var(--text-muted); font-size: 0.9rem;">The system will check your local hardware logs.</p>
+                
+                <input type="text" id="verifyPackageName" placeholder="e.g., com.example.myapp">
+                <button onclick="triggerAndroidVerification()" style="width: 100%;">Verify 1 Minute Playtime</button>
+                <div id="status" style="margin-top: 15px; font-weight: 500; font-size: 0.9rem;"></div>
+            </div>
+            
+            <div id="feedbackSection" class="glass-card" style="display: none; text-align: center; border-color: var(--success);">
+                <h2>🎉 Verification Success!</h2>
+                <textarea id="bugFeedback" rows="3" placeholder="Any bugs or feedback for the developer?"></textarea>
+                <button onclick="submitLogToSupabase()" style="width: 100%; background: var(--success);">Submit & Earn 1 Karma</button>
+            </div>
         </div>
-    </div>
+
+        <div id="view-submit" class="view">
+            <div class="glass-card">
+                <h2 style="margin-top:0;">Add to Community</h2>
+                <p style="color: var(--text-muted); font-size: 0.9rem;">Spend 20 Karma to get your app tested.</p>
+                
+                <label>Package Name</label>
+                <input type="text" id="newAppPackage" placeholder="com.mycompany.mygame">
+                
+                <label>Google Play Link</label>
+                <input type="url" id="newAppUrl" placeholder="https://play.google.com/store/apps/details?id=...">
+                
+                <button id="submitAppBtn" onclick="submitNewApp()" style="width: 100%;">Spend 20 Karma & Publish</button>
+            </div>
+        </div>
+    </main>
+
+    <nav>
+        <div class="nav-item active" onclick="switchTab('community')">
+            <span class="nav-icon">📱</span>Feed
+        </div>
+        <div class="nav-item" onclick="switchTab('verify')">
+            <span class="nav-icon">✅</span>Verify
+        </div>
+        <div class="nav-item" onclick="switchTab('submit')">
+            <span class="nav-icon">➕</span>My App
+        </div>
+    </nav>
 
     <script>
-        // Initialize realistic space particles
-        tsParticles.loadPreset("tsparticles", "stars").then(() => {
-            console.log("Particles loaded");
-        });
+        tsParticles.loadPreset("tsparticles", "stars");
 
-        // Supabase Init (Replace with your actual keys!)
+        function switchTab(tabId) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById('view-' + tabId).classList.add('active');
+            event.currentTarget.classList.add('active');
+        }
+
+        // --- SUPABASE CONFIGURATION ---
         const SUPABASE_URL = "https://YOUR_PROJECT_ID.supabase.co"; 
         const SUPABASE_ANON_KEY = "YOUR_ANON_KEY";
         const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        // Hardcoded UUID for testing - replace with actual auth logic later
+        const currentUserId = "REPLACE_WITH_A_VALID_UUID_FROM_FREE_USERS_TABLE"; 
 
-        let verifiedDuration = 0;
-        let resolvedAppUuid = "";
-        let currentTesterUuid = "PASTE_A_VALID_USER_UUID_FROM_SUPABASE_AUTH";
+        // --- FETCH COMMUNITY APPS ---
+        async function loadCommunityApps() {
+            const { data: apps, error } = await supabase
+                .from('community_apps')
+                .select('*')
+                .eq('status', 'active');
 
+            const container = document.getElementById('appListContainer');
+            
+            if (error) {
+                container.innerHTML = `<p style="color:red">Failed to load: ${error.message}</p>`;
+                return;
+            }
+
+            if (apps.length === 0) {
+                container.innerHTML = `<div class="glass-card" style="text-align: center;"><p>No apps available right now. Be the first to submit!</p></div>`;
+                return;
+            }
+
+            container.innerHTML = ''; 
+            
+            apps.forEach(app => {
+                // Extract a readable name from the package (com.example.game -> Game)
+                let cleanName = app.package_name.split('.').pop();
+                
+                container.innerHTML += `
+                    <div class="glass-card app-item">
+                        <div class="app-info">
+                            <h3>${cleanName}</h3>
+                            <p>${app.package_name}</p>
+                        </div>
+                        <button class="btn-test" onclick="startTest('${app.package_name}', '${app.play_store_link}')">Test</button>
+                    </div>
+                `;
+            });
+        }
+
+        function startTest(packageName, url) {
+            window.open(url, '_blank');
+            document.getElementById('verifyPackageName').value = packageName;
+            switchTab('verify');
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.querySelectorAll('.nav-item')[1].classList.add('active'); 
+        }
+
+        // --- SUBMIT NEW APP ---
+        async function submitNewApp() {
+            const pkg = document.getElementById('newAppPackage').value.trim();
+            const url = document.getElementById('newAppUrl').value.trim();
+            const btn = document.getElementById('submitAppBtn');
+
+            if(!pkg || !url) {
+                alert("Please fill in both fields.");
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerText = "Publishing...";
+
+            const { data, error } = await supabase
+                .from('community_apps')
+                .insert([{ 
+                    owner_id: currentUserId,
+                    package_name: pkg,
+                    play_store_link: url
+                }]);
+
+            if (error) {
+                alert("Submission failed: " + error.message);
+                btn.disabled = false;
+                btn.innerText = "Spend 20 Karma & Publish";
+            } else {
+                alert("App successfully added to the community pool!");
+                document.getElementById('newAppPackage').value = '';
+                document.getElementById('newAppUrl').value = '';
+                btn.disabled = false;
+                btn.innerText = "Spend 20 Karma & Publish";
+                
+                // Reload feed and switch back
+                loadCommunityApps();
+                document.querySelectorAll('.nav-item')[0].click();
+            }
+        }
+
+        // --- HARDWARE VERIFICATION ---
         function triggerAndroidVerification() {
-            const pkg = document.getElementById('packageName').value.trim();
+            const pkg = document.getElementById('verifyPackageName').value.trim();
             const statusDiv = document.getElementById('status');
             
-            if (!pkg) { 
-                statusDiv.innerText = "Please enter a package name."; 
-                statusDiv.style.color = "#fbbf24";
-                return; 
-            }
+            if (!pkg) { statusDiv.innerText = "Please enter a package name."; return; }
             
-            statusDiv.innerText = "Scanning system usage records...";
-            statusDiv.style.color = var(--text-muted);
+            statusDiv.innerText = "Scanning device usage records...";
+            statusDiv.style.color = "var(--accent)";
             
             if (window.AndroidBridge) {
                 window.AndroidBridge.verifyAppUsage(pkg);
             } else {
-                statusDiv.innerText = "Hardware connection missing. Open inside the OG APK.";
-                statusDiv.style.color = "#ef4444";
+                statusDiv.innerText = "TESTING MODE: Hardware bypassed in browser.";
+                setTimeout(() => { 
+                    document.getElementById('status').style.display = 'none';
+                    document.getElementById('feedbackSection').style.display = 'block';
+                }, 1500);
             }
         }
 
-        function onValidationSuccess(packageName, durationSeconds, appUuid) {
-            verifiedDuration = durationSeconds;
-            resolvedAppUuid = appUuid;
-            
-            document.getElementById('verifySection').classList.add('hidden');
-            document.getElementById('feedbackSection').classList.remove('hidden');
-        }
-
-        function onValidationFailed(remainingSeconds) {
-            const statusDiv = document.getElementById('status');
-            statusDiv.innerText = `Keep the app open for ${remainingSeconds} more seconds.`;
-            statusDiv.style.color = "#ef4444";
-        }
-
-        async function submitLogToSupabase() {
-            const feedback = document.getElementById('bugFeedback').value.trim();
-            if (feedback.length < 10) { alert("Please provide detailed feedback."); return; }
-            
-            const btn = document.getElementById('submitBtn');
-            btn.disabled = true;
-            btn.innerText = "Encrypting and Uploading...";
-
-            const { data, error } = await supabase
-                .from('daily_progress_logs')
-                .insert([{ 
-                    tester_id: currentTesterUuid, 
-                    app_id: resolvedAppUuid, 
-                    duration_seconds: parseInt(verifiedDuration),
-                    bug_feedback: feedback 
-                }]);
-
-            if (error) {
-                alert("Upload failed: " + error.message);
-                btn.disabled = false;
-                btn.innerText = "Submit & Earn Karma";
-            } else {
-                alert("Karma Point safely added to your balance!");
-                location.reload(); 
-            }
-        }
+        // Load feed on startup
+        loadCommunityApps();
     </script>
 </body>
 </html>
