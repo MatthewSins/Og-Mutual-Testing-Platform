@@ -11,146 +11,219 @@
         :root {
             --glass-bg: rgba(255, 255, 255, 0.05);
             --glass-border: rgba(255, 255, 255, 0.1);
-            --accent: #3b82f6;
-            --accent-hover: #2563eb;
-            --success: #10b981;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
+            --accent: #3b82f6; --accent-hover: #2563eb;
+            --success: #10b981; --danger: #ef4444;
+            --text-main: #f8fafc; --text-muted: #94a3b8;
             --nav-height: 70px;
         }
 
         body { 
-            margin: 0; padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-            background: #000000; 
-            color: var(--text-main); 
-            height: 100vh;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
+            margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            background: #000000; color: var(--text-main); height: 100vh; overflow: hidden; display: flex; flex-direction: column;
         }
 
         #tsparticles { position: absolute; width: 100%; height: 100%; z-index: -1; }
 
-        header {
-            padding: 20px; text-align: center; background: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(10px); border-bottom: 1px solid var(--glass-border); z-index: 10;
+        /* Auth Overlay */
+        #authOverlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(10px);
+            display: flex; align-items: center; justify-content: center; z-index: 100;
         }
-        header h1 { margin: 0; font-size: 1.2rem; font-weight: 600; letter-spacing: 1px;}
-        .karma-badge {
-            display: inline-block; margin-top: 8px; padding: 4px 12px;
-            background: rgba(59, 130, 246, 0.2); border: 1px solid var(--accent);
-            border-radius: 20px; font-size: 0.85rem; color: #60a5fa;
-        }
-
-        main { flex: 1; overflow-y: auto; padding: 20px; padding-bottom: calc(var(--nav-height) + 20px); z-index: 1; }
-
+        
         .glass-card {
             background: var(--glass-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
             border: 1px solid var(--glass-border); border-radius: 16px; padding: 20px; margin-bottom: 16px;
+            width: 90%; max-width: 400px;
         }
 
+        header { padding: 20px; text-align: center; background: rgba(0,0,0,0.5); border-bottom: 1px solid var(--glass-border); z-index: 10; }
+        header h1 { margin: 0; font-size: 1.2rem; }
+        .stats-row { display: flex; justify-content: center; gap: 10px; margin-top: 8px; }
+        .badge { padding: 4px 12px; background: rgba(59,130,246,0.2); border: 1px solid var(--accent); border-radius: 20px; font-size: 0.85rem; color: #60a5fa; }
+
+        main { flex: 1; overflow-y: auto; padding: 20px; padding-bottom: calc(var(--nav-height) + 20px); z-index: 1; }
+        
         .app-item { display: flex; justify-content: space-between; align-items: center; }
-        .app-info h3 { margin: 0 0 4px 0; font-size: 1.1rem; text-transform: capitalize; }
+        .app-info h3 { margin: 0 0 4px 0; font-size: 1.1rem; }
         .app-info p { margin: 0; color: var(--text-muted); font-size: 0.85rem; }
         
-        button { 
-            background: var(--accent); color: white; border: none; padding: 12px 16px; 
-            border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s;
-        }
+        button { background: var(--accent); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; width: 100%; margin-bottom: 10px;}
         button:hover { background: var(--accent-hover); }
-        .btn-test { background: var(--success); }
-        .btn-test:hover { background: #059669; }
+        .btn-test { background: var(--success); width: auto; margin:0;}
+        .btn-outline { background: transparent; border: 1px solid var(--accent); color: var(--accent); }
 
-        input, textarea { 
-            width: 100%; padding: 14px; margin: 8px 0 16px 0; border-radius: 10px; 
-            border: 1px solid var(--glass-border); background: rgba(0, 0, 0, 0.3); 
-            color: white; box-sizing: border-box;
-        }
-        input:focus, textarea:focus { outline: none; border-color: var(--accent); }
+        input { width: 100%; padding: 14px; margin: 8px 0 16px 0; border-radius: 10px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.3); color: white; box-sizing: border-box; }
+        input:focus { outline: none; border-color: var(--accent); }
 
         nav {
-            position: fixed; bottom: 0; width: 100%; height: var(--nav-height);
-            background: rgba(10, 10, 10, 0.8); backdrop-filter: blur(20px);
-            border-top: 1px solid var(--glass-border); display: flex; 
-            justify-content: space-around; align-items: center; z-index: 10;
+            position: fixed; bottom: 0; width: 100%; height: var(--nav-height); background: rgba(10,10,10,0.8);
+            border-top: 1px solid var(--glass-border); display: flex; justify-content: space-around; align-items: center; z-index: 10;
         }
-        .nav-item { color: var(--text-muted); font-size: 0.85rem; font-weight: 500; text-align: center; cursor: pointer; padding: 10px; flex: 1; }
+        .nav-item { color: var(--text-muted); font-size: 0.85rem; text-align: center; cursor: pointer; padding: 10px; flex: 1; }
         .nav-item.active { color: var(--accent); }
         .nav-icon { font-size: 1.4rem; display: block; margin-bottom: 4px; }
+        
         .view { display: none; }
         .view.active { display: block; }
+        .warning-box { background: rgba(239, 68, 68, 0.1); border: 1px solid var(--danger); padding: 12px; border-radius: 8px; font-size: 0.9rem; color: #fca5a5; margin-bottom: 15px;}
     </style>
 </head>
 <body>
 
     <div id="tsparticles"></div>
 
-    <header>
-        <h1>OG BETA TESTERS</h1>
-        <div class="karma-badge">Karma Balance: <span id="karmaCount">0</span></div>
-    </header>
-
-    <main>
-        <div id="view-community" class="view active">
-            <h2 style="margin-top:0;">Community Apps</h2>
-            <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px;">Test apps for 60 seconds to earn Karma.</p>
+    <div id="authOverlay">
+        <div class="glass-card">
+            <h2 id="authTitle" style="text-align:center; margin-top:0;">Login</h2>
+            <p id="authError" style="color:var(--danger); font-size:0.85rem; text-align:center;"></p>
             
-            <div id="appListContainer">
-                <div class="glass-card" style="text-align: center; color: var(--text-muted);">
-                    Loading community pool...
+            <input type="email" id="authEmail" placeholder="Developer Email">
+            <input type="password" id="authPassword" placeholder="Password">
+            
+            <button id="mainAuthBtn" onclick="handleAuth()">Sign In</button>
+            <button class="btn-outline" onclick="toggleAuthMode()" id="switchAuthBtn">Need an account? Sign up</button>
+        </div>
+    </div>
+
+    <div id="mainApp" style="display:none; height:100%; flex-direction:column;">
+        <header>
+            <h1>OG BETA TESTERS</h1>
+            <div class="stats-row">
+                <div class="badge">Karma: <span id="uiKarma">0</span></div>
+                <div class="badge" style="border-color:var(--success); color:var(--success);">Tests: <span id="uiTests">0</span>/3</div>
+            </div>
+        </header>
+
+        <main>
+            <div id="view-community" class="view active">
+                <h2 style="margin-top:0;">Community Apps</h2>
+                <div id="appListContainer">Loading pool...</div>
+            </div>
+
+            <div id="view-verify" class="view">
+                <div class="glass-card" style="text-align: center;">
+                    <h2>Verify Test</h2>
+                    <input type="text" id="verifyPackageName" placeholder="e.g., com.example.myapp">
+                    <button onclick="triggerAndroidVerification()">Verify 1 Minute Playtime</button>
+                    <div id="status" style="margin-top: 15px;"></div>
+                </div>
+                <div id="feedbackSection" class="glass-card" style="display:none; border-color:var(--success); text-align:center;">
+                    <h2>🎉 Verified!</h2>
+                    <button onclick="rewardUser()" style="background:var(--success);">Claim +1 Karma & Test Count</button>
                 </div>
             </div>
-        </div>
 
-        <div id="view-verify" class="view">
-            <div class="glass-card" style="text-align: center;">
-                <h2>Test Verification</h2>
-                <p style="color: var(--text-muted); font-size: 0.9rem;">The system will check your local hardware logs.</p>
-                
-                <input type="text" id="verifyPackageName" placeholder="e.g., com.example.myapp">
-                <button onclick="triggerAndroidVerification()" style="width: 100%;">Verify 1 Minute Playtime</button>
-                <div id="status" style="margin-top: 15px; font-weight: 500; font-size: 0.9rem;"></div>
+            <div id="view-submit" class="view">
+                <div class="glass-card">
+                    <h2 style="margin-top:0;">Submit Your App</h2>
+                    <div id="submitRequirementGate" class="warning-box hidden">
+                        ⚠️ You must complete at least 3 tests before you can submit your own app to the network.
+                    </div>
+                    
+                    <label>Professional App Name</label>
+                    <input type="text" id="newAppName" placeholder="Space Invaders Pro">
+                    
+                    <label>Package Name</label>
+                    <input type="text" id="newAppPackage" placeholder="com.company.game">
+                    
+                    <label>Google Play Link</label>
+                    <input type="url" id="newAppUrl" placeholder="https://play.google.com/...">
+                    
+                    <button id="submitAppBtn" onclick="submitNewApp()">Spend 20 Karma & Publish</button>
+                </div>
             </div>
-            
-            <div id="feedbackSection" class="glass-card" style="display: none; text-align: center; border-color: var(--success);">
-                <h2>🎉 Verification Success!</h2>
-                <textarea id="bugFeedback" rows="3" placeholder="Any bugs or feedback for the developer?"></textarea>
-                <button onclick="submitLogToSupabase()" style="width: 100%; background: var(--success);">Submit & Earn 1 Karma</button>
-            </div>
-        </div>
+        </main>
 
-        <div id="view-submit" class="view">
-            <div class="glass-card">
-                <h2 style="margin-top:0;">Add to Community</h2>
-                <p style="color: var(--text-muted); font-size: 0.9rem;">Spend 20 Karma to get your app tested.</p>
-                
-                <label>Package Name</label>
-                <input type="text" id="newAppPackage" placeholder="com.mycompany.mygame">
-                
-                <label>Google Play Link</label>
-                <input type="url" id="newAppUrl" placeholder="https://play.google.com/store/apps/details?id=...">
-                
-                <button id="submitAppBtn" onclick="submitNewApp()" style="width: 100%;">Spend 20 Karma & Publish</button>
-            </div>
-        </div>
-    </main>
-
-    <nav>
-        <div class="nav-item active" onclick="switchTab('community')">
-            <span class="nav-icon">📱</span>Feed
-        </div>
-        <div class="nav-item" onclick="switchTab('verify')">
-            <span class="nav-icon">✅</span>Verify
-        </div>
-        <div class="nav-item" onclick="switchTab('submit')">
-            <span class="nav-icon">➕</span>My App
-        </div>
-    </nav>
+        <nav>
+            <div class="nav-item active" onclick="switchTab('community')"><span class="nav-icon">📱</span>Feed</div>
+            <div class="nav-item" onclick="switchTab('verify')"><span class="nav-icon">✅</span>Verify</div>
+            <div class="nav-item" onclick="switchTab('submit')"><span class="nav-icon">➕</span>My App</div>
+        </nav>
+    </div>
 
     <script>
         tsParticles.loadPreset("tsparticles", "stars");
 
+        // --- SUPABASE SETUP ---
+        const SUPABASE_URL = "https://YOUR_PROJECT_ID.supabase.co"; 
+        const SUPABASE_ANON_KEY = "YOUR_ANON_KEY";
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let isLoginMode = true;
+        let currentUser = null;
+        let userData = { tests_completed: 0, karma: 0 }; // Local state
+
+        // --- AUTH LOGIC ---
+        function toggleAuthMode() {
+            isLoginMode = !isLoginMode;
+            document.getElementById('authTitle').innerText = isLoginMode ? "Login" : "Create Account";
+            document.getElementById('mainAuthBtn').innerText = isLoginMode ? "Sign In" : "Sign Up";
+            document.getElementById('switchAuthBtn').innerText = isLoginMode ? "Need an account? Sign up" : "Already have an account? Login";
+        }
+
+        async function handleAuth() {
+            const email = document.getElementById('authEmail').value;
+            const password = document.getElementById('authPassword').value;
+            const errDiv = document.getElementById('authError');
+            
+            if(!email || password.length < 6) { errDiv.innerText = "Valid email and 6+ char password required."; return; }
+            
+            document.getElementById('mainAuthBtn').innerText = "Processing...";
+            let authResponse;
+
+            if (isLoginMode) {
+                authResponse = await supabase.auth.signInWithPassword({ email, password });
+            } else {
+                authResponse = await supabase.auth.signUp({ email, password });
+            }
+
+            if (authResponse.error) {
+                errDiv.innerText = authResponse.error.message;
+                document.getElementById('mainAuthBtn').innerText = isLoginMode ? "Sign In" : "Sign Up";
+            }
+            // If successful, the onAuthStateChange listener handles the UI swap.
+        }
+
+        // Listener: Watches for login/logout and fetches user data
+        supabase.auth.onAuthStateChange(async (event, session) => {
+            if (session) {
+                currentUser = session.user;
+                
+                // Fetch user data from your free_users table
+                const { data } = await supabase.from('free_users').select('tests_completed').eq('id', currentUser.id).single();
+                
+                if (data) {
+                    userData.tests_completed = data.tests_completed || 0;
+                    // Note: Update this query if you have a specific karma column!
+                    updateUIStats();
+                }
+
+                document.getElementById('authOverlay').style.display = 'none';
+                document.getElementById('mainApp').style.display = 'flex';
+                loadCommunityApps();
+            } else {
+                document.getElementById('authOverlay').style.display = 'flex';
+                document.getElementById('mainApp').style.display = 'none';
+            }
+        });
+
+        function updateUIStats() {
+            document.getElementById('uiTests').innerText = userData.tests_completed;
+            
+            // GATE CHECK LOGIC: Lock submission if tests < 3
+            if (userData.tests_completed < 3) {
+                document.getElementById('submitRequirementGate').style.display = 'block';
+                document.getElementById('submitAppBtn').disabled = true;
+                document.getElementById('submitAppBtn').style.background = '#334155';
+            } else {
+                document.getElementById('submitRequirementGate').style.display = 'none';
+                document.getElementById('submitAppBtn').disabled = false;
+                document.getElementById('submitAppBtn').style.background = 'var(--accent)';
+            }
+        }
+
+        // --- CORE FUNCTIONS ---
         function switchTab(tabId) {
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -158,48 +231,21 @@
             event.currentTarget.classList.add('active');
         }
 
-        // --- SUPABASE CONFIGURATION ---
-        const SUPABASE_URL = "https://YOUR_PROJECT_ID.supabase.co"; 
-        const SUPABASE_ANON_KEY = "YOUR_ANON_KEY";
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        
-        // Hardcoded UUID for testing - replace with actual auth logic later
-        const currentUserId = "REPLACE_WITH_A_VALID_UUID_FROM_FREE_USERS_TABLE"; 
-
-        // --- FETCH COMMUNITY APPS ---
         async function loadCommunityApps() {
-            const { data: apps, error } = await supabase
-                .from('community_apps')
-                .select('*')
-                .eq('status', 'active');
-
+            const { data: apps, error } = await supabase.from('community_apps').select('*').eq('status', 'active');
             const container = document.getElementById('appListContainer');
+            if (apps.length === 0) { container.innerHTML = `<div class="glass-card"><p>No apps right now.</p></div>`; return; }
             
-            if (error) {
-                container.innerHTML = `<p style="color:red">Failed to load: ${error.message}</p>`;
-                return;
-            }
-
-            if (apps.length === 0) {
-                container.innerHTML = `<div class="glass-card" style="text-align: center;"><p>No apps available right now. Be the first to submit!</p></div>`;
-                return;
-            }
-
             container.innerHTML = ''; 
-            
             apps.forEach(app => {
-                // Extract a readable name from the package (com.example.game -> Game)
-                let cleanName = app.package_name.split('.').pop();
-                
                 container.innerHTML += `
                     <div class="glass-card app-item">
                         <div class="app-info">
-                            <h3>${cleanName}</h3>
+                            <h3>${app.app_name}</h3>
                             <p>${app.package_name}</p>
                         </div>
                         <button class="btn-test" onclick="startTest('${app.package_name}', '${app.play_store_link}')">Test</button>
-                    </div>
-                `;
+                    </div>`;
             });
         }
 
@@ -207,72 +253,50 @@
             window.open(url, '_blank');
             document.getElementById('verifyPackageName').value = packageName;
             switchTab('verify');
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             document.querySelectorAll('.nav-item')[1].classList.add('active'); 
         }
 
-        // --- SUBMIT NEW APP ---
         async function submitNewApp() {
+            if (userData.tests_completed < 3) return; // Hard security check
+
+            const name = document.getElementById('newAppName').value.trim();
             const pkg = document.getElementById('newAppPackage').value.trim();
             const url = document.getElementById('newAppUrl').value.trim();
-            const btn = document.getElementById('submitAppBtn');
 
-            if(!pkg || !url) {
-                alert("Please fill in both fields.");
-                return;
-            }
+            if(!name || !pkg || !url) { alert("Fill all fields."); return; }
 
-            btn.disabled = true;
-            btn.innerText = "Publishing...";
+            const { error } = await supabase.from('community_apps').insert([{ 
+                owner_id: currentUser.id,
+                app_name: name,
+                package_name: pkg,
+                play_store_link: url
+            }]);
 
-            const { data, error } = await supabase
-                .from('community_apps')
-                .insert([{ 
-                    owner_id: currentUserId,
-                    package_name: pkg,
-                    play_store_link: url
-                }]);
-
-            if (error) {
-                alert("Submission failed: " + error.message);
-                btn.disabled = false;
-                btn.innerText = "Spend 20 Karma & Publish";
-            } else {
-                alert("App successfully added to the community pool!");
+            if (error) { alert("Failed: " + error.message); } 
+            else {
+                alert("App Published!");
+                document.getElementById('newAppName').value = '';
                 document.getElementById('newAppPackage').value = '';
                 document.getElementById('newAppUrl').value = '';
-                btn.disabled = false;
-                btn.innerText = "Spend 20 Karma & Publish";
-                
-                // Reload feed and switch back
                 loadCommunityApps();
                 document.querySelectorAll('.nav-item')[0].click();
             }
         }
 
-        // --- HARDWARE VERIFICATION ---
+        // --- HARDWARE VERIFICATION SIMULATION ---
         function triggerAndroidVerification() {
-            const pkg = document.getElementById('verifyPackageName').value.trim();
-            const statusDiv = document.getElementById('status');
-            
-            if (!pkg) { statusDiv.innerText = "Please enter a package name."; return; }
-            
-            statusDiv.innerText = "Scanning device usage records...";
-            statusDiv.style.color = "var(--accent)";
-            
-            if (window.AndroidBridge) {
-                window.AndroidBridge.verifyAppUsage(pkg);
-            } else {
-                statusDiv.innerText = "TESTING MODE: Hardware bypassed in browser.";
-                setTimeout(() => { 
-                    document.getElementById('status').style.display = 'none';
-                    document.getElementById('feedbackSection').style.display = 'block';
-                }, 1500);
-            }
+            document.getElementById('status').innerText = "Simulating Hardware Check...";
+            setTimeout(() => { 
+                document.getElementById('status').innerText = "";
+                document.getElementById('feedbackSection').style.display = 'block';
+            }, 1000);
         }
 
-        // Load feed on startup
-        loadCommunityApps();
+        async function rewardUser() {
+            // This is where you will run an UPDATE on your free_users table to increment tests_completed by 1
+            alert("This will update the database later! For now, good job.");
+            document.getElementById('feedbackSection').style.display = 'none';
+        }
     </script>
 </body>
 </html>
