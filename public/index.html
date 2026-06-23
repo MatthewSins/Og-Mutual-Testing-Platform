@@ -24,7 +24,6 @@
 
         #tsparticles { position: absolute; width: 100%; height: 100%; z-index: -1; }
 
-        /* Auth Overlay */
         #authOverlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.85); backdrop-filter: blur(10px);
@@ -35,6 +34,7 @@
             background: var(--glass-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
             border: 1px solid var(--glass-border); border-radius: 16px; padding: 20px; margin-bottom: 16px;
             width: 90%; max-width: 400px; margin-left: auto; margin-right: auto;
+            transition: all 0.3s ease;
         }
 
         header { padding: 20px; text-align: center; background: rgba(0,0,0,0.5); border-bottom: 1px solid var(--glass-border); z-index: 10; }
@@ -77,6 +77,10 @@
         <div class="glass-card">
             <h2 id="authTitle" style="text-align:center; margin-top:0;">Login</h2>
             <p id="authError" style="color:var(--danger); font-size:0.85rem; text-align:center;"></p>
+            
+            <div id="nameBox" style="display: none;">
+                <input type="text" id="authName" placeholder="Developer / Studio Name">
+            </div>
             
             <input type="email" id="authEmail" placeholder="Developer Email">
             <input type="password" id="authPassword" placeholder="Password (Min 6 chars)">
@@ -131,10 +135,8 @@
                     
                     <label>Professional App Name</label>
                     <input type="text" id="newAppName" placeholder="Space Invaders Pro">
-                    
                     <label>Package Name</label>
                     <input type="text" id="newAppPackage" placeholder="com.company.game">
-                    
                     <label>Google Play Link</label>
                     <input type="url" id="newAppUrl" placeholder="https://play.google.com/...">
                     
@@ -153,32 +155,78 @@
     <script>
         tsParticles.loadPreset("tsparticles", "stars");
 
-        // --- 1. SUPABASE SETUP (KEYS INTEGRATED) ---
+        // --- 1. GLOBALS ---
+        var isLoginMode = true;
+        var currentUser = null;
+        var userData = { tests_completed: 0, karma: 0 }; 
+        var supabaseClient = null;
+
         const SUPABASE_URL = "https://aqdunqacywekbajxxiqc.supabase.co"; 
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxZHVucWFjeXdla2Jhanh4aXFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIxOTc0NTMsImV4cCI6MjA5Nzc3MzQ1M30.hUMMoK7sBidrY1hXcWWSRIWqAviNEC5h7slf875BCr0";
-        
-        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // --- 2. GLOBAL VARIABLES ---
-        let isLoginMode = true;
-        let currentUser = null;
-        let userData = { tests_completed: 0, karma: 0 }; 
+        // --- 2. BULLETPROOF STARTUP CHECK ---
+        window.onload = function() {
+            try {
+                if (typeof window.supabase === 'undefined') {
+                    throw new Error("Browser blocked the database. Turn off Adblockers and ensure you are using the Vercel HTTPS link.");
+                }
+                
+                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                
+                supabaseClient.auth.onAuthStateChange(async (event, session) => {
+                    if (session) {
+                        currentUser = session.user;
+                        const { data } = await supabaseClient.from('free_users').select('tests_completed').eq('id', currentUser.id).single();
+                        if (data) {
+                            userData.tests_completed = data.tests_completed || 0;
+                            updateUIStats();
+                        }
+                        document.getElementById('authOverlay').style.display = 'none';
+                        document.getElementById('mainApp').style.display = 'flex';
+                        loadCommunityApps();
+                    } else {
+                        document.getElementById('authOverlay').style.display = 'flex';
+                        document.getElementById('mainApp').style.display = 'none';
+                    }
+                });
+
+            } catch (startupError) {
+                console.error(startupError);
+                document.getElementById('authError').innerText = "STARTUP CRASH: " + startupError.message;
+            }
+        };
 
         // --- 3. AUTHENTICATION LOGIC ---
         function toggleAuthMode() {
             isLoginMode = !isLoginMode;
             document.getElementById('authTitle').innerText = isLoginMode ? "Login" : "Create Account";
-            document.getElementById('mainAuthBtn').innerText = isLoginMode ? "Sign In" : "Sign Up";
+            document.getElementById('mainAuthBtn').innerText = isLoginMode ? "Sign In" : "Create Account";
             document.getElementById('switchAuthBtn').innerText = isLoginMode ? "Need an account? Sign up" : "Already have an account? Login";
+            
+            // This slides the Name box into view when switching to Sign Up
+            document.getElementById('nameBox').style.display = isLoginMode ? "none" : "block";
         }
 
         async function handleAuth() {
             const email = document.getElementById('authEmail').value.trim();
             const password = document.getElementById('authPassword').value;
+            const devName = document.getElementById('authName').value.trim();
+            
             const errDiv = document.getElementById('authError');
             const btn = document.getElementById('mainAuthBtn');
             
             errDiv.style.color = "var(--danger)";
+
+            if(!supabaseClient) {
+                errDiv.innerText = "Database is disconnected. Refresh the page on your Vercel link.";
+                return;
+            }
+
+            // Force them to enter a name if signing up
+            if(!isLoginMode && !devName) {
+                errDiv.innerText = "Please enter your Developer/Studio Name.";
+                return;
+            }
 
             if(!email || password.length < 6) { 
                 errDiv.innerText = "Valid email and 6+ char password required."; 
@@ -193,50 +241,27 @@
 
                 if (isLoginMode) {
                     authResponse = await supabaseClient.auth.signInWithPassword({ email, password });
+                    if (authResponse.error) throw authResponse.error;
                 } else {
                     authResponse = await supabaseClient.auth.signUp({ email, password });
-                }
-
-                if (authResponse.error) {
-                    errDiv.innerText = authResponse.error.message;
-                    btn.innerText = isLoginMode ? "Sign In" : "Sign Up";
-                } else if (!isLoginMode && !authResponse.data.session) {
-                    errDiv.innerText = "Success! Please check your email inbox to verify your account.";
-                    errDiv.style.color = "var(--success)";
-                    btn.innerText = "Sign Up";
+                    if (authResponse.error) throw authResponse.error;
+                    
+                    // Instantly save their custom name to your database
+                    if (authResponse.data?.user) {
+                        await supabaseClient.from('free_users')
+                            .update({ developer_name: devName })
+                            .eq('id', authResponse.data.user.id);
+                    }
                 }
             } catch (err) {
-                // Upgraded Error Catching
                 console.error(err);
-                errDiv.innerText = "System Block: " + err.message + " (Check for Adblocker or file:// URL)";
-                btn.innerText = isLoginMode ? "Sign In" : "Sign Up";
+                errDiv.innerText = err.message;
+                btn.innerText = isLoginMode ? "Sign In" : "Create Account";
             }
         }
 
-        // --- 4. SESSION LISTENER ---
-        supabaseClient.auth.onAuthStateChange(async (event, session) => {
-            if (session) {
-                currentUser = session.user;
-                
-                const { data } = await supabaseClient.from('free_users').select('tests_completed').eq('id', currentUser.id).single();
-                
-                if (data) {
-                    userData.tests_completed = data.tests_completed || 0;
-                    updateUIStats();
-                }
-
-                document.getElementById('authOverlay').style.display = 'none';
-                document.getElementById('mainApp').style.display = 'flex';
-                loadCommunityApps();
-            } else {
-                document.getElementById('authOverlay').style.display = 'flex';
-                document.getElementById('mainApp').style.display = 'none';
-            }
-        });
-
         function updateUIStats() {
             document.getElementById('uiTests').innerText = userData.tests_completed;
-            
             if (userData.tests_completed < 3) {
                 document.getElementById('submitRequirementGate').style.display = 'block';
                 document.getElementById('submitAppBtn').disabled = true;
@@ -246,7 +271,6 @@
             }
         }
 
-        // --- 5. UI NAVIGATION ---
         function switchTab(tabId) {
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -254,7 +278,6 @@
             event.currentTarget.classList.add('active');
         }
 
-        // --- 6. DATABASE READ/WRITE ---
         async function loadCommunityApps() {
             const { data: apps, error } = await supabaseClient.from('community_apps').select('*').eq('status', 'active');
             const container = document.getElementById('appListContainer');
@@ -321,13 +344,11 @@
                 document.getElementById('newAppUrl').value = '';
                 btn.innerText = "Spend 20 Karma & Publish";
                 btn.disabled = false;
-                
                 loadCommunityApps();
                 document.querySelectorAll('.nav-item')[0].click();
             }
         }
 
-        // --- 7. HARDWARE VERIFICATION ---
         function triggerAndroidVerification() {
             const pkg = document.getElementById('verifyPackageName').value.trim();
             const statusDiv = document.getElementById('status');
