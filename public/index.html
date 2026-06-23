@@ -50,8 +50,8 @@
         
         button { background: var(--accent); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; width: 100%; margin-bottom: 10px;}
         button:hover { background: var(--accent-hover); }
+        button:disabled { background: #334155 !important; color: #94a3b8 !important; cursor: not-allowed; }
         .btn-test { background: var(--success); width: auto; margin:0;}
-        .btn-outline { background: transparent; border: 1px solid var(--accent); color: var(--accent); }
 
         input { width: 100%; padding: 14px; margin: 8px 0 16px 0; border-radius: 10px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.3); color: white; box-sizing: border-box; }
         input:focus { outline: none; border-color: var(--accent); }
@@ -82,7 +82,12 @@
             <input type="password" id="authPassword" placeholder="Password (Min 6 chars)">
             
             <button id="mainAuthBtn" onclick="handleAuth()">Sign In</button>
-            <button class="btn-outline" onclick="toggleAuthMode()" id="switchAuthBtn">Need an account? Sign up</button>
+            
+            <p style="text-align: center; margin-top: 15px; font-size: 0.9rem;">
+                <a href="#" onclick="toggleAuthMode(); return false;" id="switchAuthBtn" style="color: var(--accent); text-decoration: none;">
+                    Need an account? Sign up
+                </a>
+            </p>
         </div>
     </div>
 
@@ -148,11 +153,10 @@
     <script>
         tsParticles.loadPreset("tsparticles", "stars");
 
-        // --- 1. SUPABASE SETUP ---
+        // --- 1. SUPABASE SETUP (KEYS INTEGRATED) ---
         const SUPABASE_URL = "https://aqdunqacywekbajxxiqc.supabase.co"; 
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxZHVucWFjeXdla2Jhanh4aXFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIxOTc0NTMsImV4cCI6MjA5Nzc3MzQ1M30.hUMMoK7sBidrY1hXcWWSRIWqAviNEC5h7slf875BCr0";
         
-        // FIX: We rename our connection to 'supabaseClient' so it doesn't fight the CDN
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         // --- 2. GLOBAL VARIABLES ---
@@ -202,7 +206,9 @@
                     btn.innerText = "Sign Up";
                 }
             } catch (err) {
-                errDiv.innerText = "Network Error. Check your Supabase keys.";
+                // Upgraded Error Catching
+                console.error(err);
+                errDiv.innerText = "System Block: " + err.message + " (Check for Adblocker or file:// URL)";
                 btn.innerText = isLoginMode ? "Sign In" : "Sign Up";
             }
         }
@@ -212,7 +218,6 @@
             if (session) {
                 currentUser = session.user;
                 
-                // Fetch stats from free_users table
                 const { data } = await supabaseClient.from('free_users').select('tests_completed').eq('id', currentUser.id).single();
                 
                 if (data) {
@@ -235,11 +240,9 @@
             if (userData.tests_completed < 3) {
                 document.getElementById('submitRequirementGate').style.display = 'block';
                 document.getElementById('submitAppBtn').disabled = true;
-                document.getElementById('submitAppBtn').style.background = '#334155';
             } else {
                 document.getElementById('submitRequirementGate').style.display = 'none';
                 document.getElementById('submitAppBtn').disabled = false;
-                document.getElementById('submitAppBtn').style.background = 'var(--accent)';
             }
         }
 
