@@ -162,28 +162,48 @@
             document.getElementById('switchAuthBtn').innerText = isLoginMode ? "Need an account? Sign up" : "Already have an account? Login";
         }
 
-        async function handleAuth() {
-            const email = document.getElementById('authEmail').value;
-            const password = document.getElementById('authPassword').value;
-            const errDiv = document.getElementById('authError');
-            
-            if(!email || password.length < 6) { errDiv.innerText = "Valid email and 6+ char password required."; return; }
-            
-            document.getElementById('mainAuthBtn').innerText = "Processing...";
-            let authResponse;
+        async function handleAuth() 
+        {
+    const email = document.getElementById('authEmail').value.trim();
+    const password = document.getElementById('authPassword').value;
+    const errDiv = document.getElementById('authError');
+    const btn = document.getElementById('mainAuthBtn');
+    
+    // Reset colors
+    errDiv.style.color = "var(--danger)";
 
-            if (isLoginMode) {
-                authResponse = await supabase.auth.signInWithPassword({ email, password });
-            } else {
-                authResponse = await supabase.auth.signUp({ email, password });
-            }
+    if(!email || password.length < 6) { 
+        errDiv.innerText = "Valid email and 6+ char password required."; 
+        return; 
+    }
+    
+    btn.innerText = "Processing...";
+    errDiv.innerText = ""; // Clear old errors
 
-            if (authResponse.error) {
-                errDiv.innerText = authResponse.error.message;
-                document.getElementById('mainAuthBtn').innerText = isLoginMode ? "Sign In" : "Sign Up";
-            }
-            // If successful, the onAuthStateChange listener handles the UI swap.
+    try {
+        let authResponse;
+
+        if (isLoginMode) {
+            authResponse = await supabase.auth.signInWithPassword({ email, password });
+        } else {
+            authResponse = await supabase.auth.signUp({ email, password });
         }
+
+        if (authResponse.error) {
+            // Show Supabase error (e.g., "Invalid credentials")
+            errDiv.innerText = authResponse.error.message;
+            btn.innerText = isLoginMode ? "Sign In" : "Sign Up";
+        } else if (!isLoginMode && !authResponse.data.session) {
+            // Catch the silent trap if Email Confirmation is still turned on
+            errDiv.innerText = "Success! Please check your email inbox to verify your account.";
+            errDiv.style.color = "var(--success)";
+            btn.innerText = "Sign Up";
+        }
+    } catch (err) {
+        errDiv.innerText = "Network Error. Did you paste your Supabase keys correctly?";
+        btn.innerText = isLoginMode ? "Sign In" : "Sign Up";
+    }
+}
 
         // Listener: Watches for login/logout and fetches user data
         supabase.auth.onAuthStateChange(async (event, session) => {
